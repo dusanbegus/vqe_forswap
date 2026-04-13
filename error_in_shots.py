@@ -62,27 +62,34 @@ def decompose(ground_state, dimension):
     return s2s.mean(), s2s.std()
     # we will then compare the error in the SWAP test as we increase the number of shots in the circuit
 if __name__ == "__main__":
+    np.random.seed(5*(4+8+16+32))
+    # we will try to ensure repeatability of the code
     dimensions=[2,3,4,5]
+    # we will also vary the magnetic field h
+    hs = [0.0, 0.2, 0.5, 1.0, 2.0]
+    errors=[[],[],[],[],[]]
+    stds=[[],[],[],[],[]]
+    # we prepare the error and standard deviation lists for various h
     for dimension in dimensions:
-        ground_state, cost_history_dict = vqe.variational_quantum_eigensolver(dimension)
-        decompose(ground_state, dimension)
-        # we now want to plot the error vs number of sites in the Ising model, along with standard deviation error bars
-    errors=[]
-    stds=[]
-    for dimension in dimensions:
-        ground_state, cost_history_dict = vqe.variational_quantum_eigensolver(dimension)
-        error, std=decompose(ground_state, dimension)
-        errors.append(error)
-        stds.append(std)
+        counter=0
+        for h in hs:
+            ground_state, cost_history_dict = vqe.variational_quantum_eigensolver(dimension, h=h)
+            error, std=decompose(ground_state, dimension)
+            errors[counter].append(error)
+            stds[counter].append(std)
+            counter=counter+1
+    # now we want to plot the errors for various Hilbert space sizes and we will label different magnetic field strengths
     plt.figure(figsize=(10, 6))
     Ns=[2**d for d in dimensions]
     # we will want a colorbar of standard deviations
-    plt.plot(Ns, errors, label="Average Error")
-    plt.fill_between(Ns, np.array(errors) - np.array(stds), np.array(errors) + np.array(stds), alpha=0.2, label="Error Variance")
+    for i,h in enumerate(hs):
+        plt.plot(Ns, errors[i], label=f"Average error with magnetic field h={h}")
+        # we will need to convert errors[i] into numpy, it doesn't work otherwise
+        plt.fill_between(Ns, np.array(errors[i]) - np.array(stds[i]), np.array(errors[i]) + np.array(stds[i]), alpha=0.2, label=f"Error Variance with h={h}")
     plt.xlabel("Hilbert space size (N)")
     plt.ylabel("Average Error")
-    plt.title("SWAP Test Error vs Hilbert Space size for the Ising Model")
+    plt.title("SWAP Test Error vs Hilbert Space size for the Ising Model: Alternative Circuit Design")
     plt.legend()
-    plt.savefig("swap_test_error_ising.png")
+    plt.savefig("swap_test_error_ising_alternative.png")
     plt.show()
 
