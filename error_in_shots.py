@@ -63,7 +63,8 @@ def decompose(ground_state, dimension):
     # we will then compare the error in the SWAP test as we increase the number of shots in the circuit
 def error_withoutsecondstate():
     # in this part of the code we will work out the comparison between the error with and without accounting for the second ground state
-    
+    return 0
+
 if __name__ == "__main__":
     np.random.seed(37)
     dimensions=[2,3,4,5]
