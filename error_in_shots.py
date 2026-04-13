@@ -61,9 +61,11 @@ def decompose(ground_state, dimension):
     s2s=np.array(s2s)
     return s2s.mean(), s2s.std()
     # we will then compare the error in the SWAP test as we increase the number of shots in the circuit
+def error_withoutsecondstate():
+    # in this part of the code we will work out the comparison between the error with and without accounting for the second ground state
+    
 if __name__ == "__main__":
-    np.random.seed(5*(4+8+16+32))
-    # we will try to ensure repeatability of the code
+    np.random.seed(37)
     dimensions=[2,3,4,5]
     # we will also vary the magnetic field h
     hs = [0.0, 0.2, 0.5, 1.0, 2.0]
@@ -88,8 +90,8 @@ if __name__ == "__main__":
         plt.fill_between(Ns, np.array(errors[i]) - np.array(stds[i]), np.array(errors[i]) + np.array(stds[i]), alpha=0.2, label=f"Error Variance with h={h}")
     plt.xlabel("Hilbert space size (N)")
     plt.ylabel("Average Error")
-    plt.title("SWAP Test Error vs Hilbert Space size for the Ising Model: Alternative Circuit Design")
+    plt.title("SWAP Test Error vs Hilbert Space size for the Ising Model: Initial SU(2) efficient ansatz")
     plt.legend()
-    plt.savefig("swap_test_error_ising_alternative.png")
+    plt.savefig("swap_test_error_ising.png")
     plt.show()
 
