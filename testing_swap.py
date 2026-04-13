@@ -8,7 +8,7 @@ from qiskit import QuantumCircuit
 from qiskit.circuit.library import CSwapGate
 from qiskit import QuantumCircuit, ClassicalRegister, transpile
 from qiskit_aer import AerSimulator 
-import setup
+
 
 # dimension indicates the number of qubits we are working with
 
@@ -29,7 +29,7 @@ def create_rand(dimension):
     state=state/np.linalg.norm(state)
     return np.array(state)
 
-def initialize_circuit(state, basis, dimension):
+def initialize_circuit(state, basis, dimension, shotss=1000):
     cs=[]
     S2=[]
     for vector in basis:
@@ -58,7 +58,7 @@ def initialize_circuit(state, basis, dimension):
         simulator = AerSimulator(method='statevector')   
         qc.measure(2*dimension,0)
         # so now we are done with the SWAP test
-        shotss=1000
+        
         job = simulator.run(qc, shots=shotss)  # Run 100 times
         result = job.result()
         counts = result.get_counts(qc)
@@ -69,10 +69,35 @@ def initialize_circuit(state, basis, dimension):
     S2=np.array(S2)
     cs=np.array(cs)
     return cs,S2
+def varying_shots():
+    dimension=4
+    shots=[100, 1000, 2000, 5000, 10000]
+    repeats=5
+    errors=[]
+    stds=[]
+    for shot in shots:
+        err=[]
+        for r in range(repeats):
+            b=basiss(dimension)
+            target=create_rand(2**dimension)
+            c_values, s2_values=initialize_circuit(target, b, dimension, shotss=shot)
+            err.append(np.sum(s2_values)-1.0)
+        errors.append(np.mean(err))
+        stds.append(np.std(err))
+    
+    plt.plot(shots, errors, label="Error")
+    plt.fill_between(shots, np.array(errors) - np.array(stds), np.array(errors) + np.array(stds), alpha=0.2, label="Error standard deviation")
+    plt.xlabel("Number of shots")
+    plt.ylabel("Error")
+    plt.title("SWAP test error vs Number of shots through the circuit: 4 qubits")
+    plt.legend()
+    plt.savefig("swap_test_error_shots.png")
+    plt.show()
 def the_test():
     dimensions=[2,3,4,5]
     repeats=30 # repeat the experiment 30 times for each dimension and average the error
     err=[]
+    var=[]
     for dimension in dimensions:
         errors=[]
         for r in range(repeats):
@@ -81,14 +106,18 @@ def the_test():
             c_values, s2_values=initialize_circuit(target, b, dimension)
             errors.append(np.sum(s2_values)-1.0) 
         err.append(np.mean(errors))
+        var.append(np.var(errors))      
+    # now we plot the errors against the dimension of the Hilbert space, along with variances                            
     Ns=[2**d for d in dimensions]
-    plt.plot(Ns, err)
+    plt.plot(Ns, err, label="Average Error")
+    plt.fill_between(Ns, np.array(err) - np.array(var), np.array(err) + np.array(var), alpha=0.2, label="Error Variance")
     plt.xlabel("Hilbert space size (N)")
     plt.ylabel("Average Error")
-    plt.title("SWAP Test Error vs Hilbert Space ize")
+    plt.title("SWAP Test Error vs Hilbert Space size")
+    plt.legend()
     plt.savefig("swap_test_error.png")
     plt.show()
 
 
 if __name__ == "__main__":
-    the_test()
+    varying_shots()
