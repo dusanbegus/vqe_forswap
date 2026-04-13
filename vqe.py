@@ -21,13 +21,13 @@ def variational_quantum_eigensolver(dimension, h=0):
     # we will also add a magnetic field term to the Hamiltonian, and we will investigate degenerate ground states versus a single ground state
 
     if dimension == 2:
-        hamiltonian = SparsePauliOp.from_list([("ZZ", -1.0), ("ZI", h), ("IZ", h)])
+        hamiltonian = SparsePauliOp.from_list([("ZZ", -1.0), ("ZI", h/2.0), ("IZ", h/2.0)])
     elif dimension ==3:
-        hamiltonian = SparsePauliOp.from_list([("ZZI", -1/3.0), ("IZZ", -1/3.0), ("ZIZ", -1/3.0), ("IIZ", h), ("IZI", h), ("ZII", h)])
+        hamiltonian = SparsePauliOp.from_list([("ZZI", -1/3.0), ("IZZ", -1/3.0), ("ZIZ", -1/3.0), ("IIZ", h/3.0), ("IZI", h/3.0), ("ZII", h/3.0)])
     elif dimension ==4:
-        hamiltonian = SparsePauliOp.from_list([("ZZII", -1/4.0), ("IZZI", -1/4.0), ("IIZZ", -1/4.0), ("ZIIZ", -1/4.0), ("ZIII", h), ("IZII", h), ("IIZI", h), ("IIIZ", h)])
+        hamiltonian = SparsePauliOp.from_list([("ZZII", -1/4.0), ("IZZI", -1/4.0), ("IIZZ", -1/4.0), ("ZIIZ", -1/4.0), ("ZIII", h/4.0), ("IZII", h/4.0), ("IIZI", h/4.0), ("IIIZ", h/4.0)])
     elif dimension ==5:
-        hamiltonian = SparsePauliOp.from_list([("ZZIII", -1/5.0), ("IZZII", -1/5.0), ("IIZZI", -1/5.0), ("IIIZZ", -1/5.0), ("ZIIIZ", -1/5.0), ("ZIIII", h), ("IZIII", h), ("IIZII", h), ("IIIZI", h), ("IIIIZ", h)])
+        hamiltonian = SparsePauliOp.from_list([("ZZIII", -1/5.0), ("IZZII", -1/5.0), ("IIZZI", -1/5.0), ("IIIZZ", -1/5.0), ("ZIIIZ", -1/5.0), ("ZIIII", h/5.0), ("IZIII", h/5.0), ("IIZII", h/5.0), ("IIIZI", h/5.0), ("IIIIZ", h/5.0)])
     else: 
         raise ValueError("Dimension must be between 2 and 5")
     # we note that we work with closed boundary conditions in this case
@@ -44,6 +44,7 @@ def variational_quantum_eigensolver(dimension, h=0):
     # we want to save the layout of the ansatz as a png
     #ansatz.draw("mpl", style="iqp").savefig(f"ansatz_layout_{dimension}_alternate_2.png")
     num_params = ansatz.num_parameters
+    #print(num_params)
     #print("This circuit has ", num_params, "parameters")
 
     #ansatz.decompose().draw("mpl", style="iqp")
@@ -121,7 +122,8 @@ def variational_quantum_eigensolver(dimension, h=0):
     return ground_state, cost_history_dict
 
 if __name__ == "__main__":
-    np.random.seed(4+8+16+32)
+    np.random.seed(37)
+    # 37 why not
     dimensions = [2,3,4,5]
     # we want to plot all the convergence histories in one plot
     plt.figure(figsize=(10, 6))
@@ -129,9 +131,9 @@ if __name__ == "__main__":
     for dimension in dimensions:
         ground_state_circuit, cost_history_dict = variational_quantum_eigensolver(dimension,h=0.0)
         plt.plot(cost_history_dict["cost_history"], label=f"Ising Model over {dimension} sites")
-    plt.xlabel("Iteration (Alternative Circuit Design)")
+    plt.xlabel("Iteration (Alternative ansatz)")
     plt.ylabel("Energy Estimate")
-    plt.title("VQE Convergence for Ising Model with varying number of sites (closed boundary conditions, alternative circuit design)")
+    plt.title("VQE Convergence for Ising Model with varying number of sites (closed boundary conditions, Alternative ansatz)")
     plt.legend()
     plt.savefig("vqe_convergence_alternative2.png")
     plt.show()
