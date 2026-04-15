@@ -61,11 +61,84 @@ def decompose(ground_state, dimension):
     s2s=np.array(s2s)
     return s2s.mean(), s2s.std()
     # we will then compare the error in the SWAP test as we increase the number of shots in the circuit
-def error_withoutsecondstate():
-    # in this part of the code we will work out the comparison between the error with and without accounting for the second ground state
-    return 0
-
-if __name__ == "__main__":
+def error_withoutsecondstate(ground_state, dimension):
+    basis = testing_swap.basiss(dimension)
+    basis=np.array(basis)
+    # we identify the two ground states that we want to perform the SWAP test on.
+    state1 = basis[0]
+    state2 = basis[2**dimension-1]
+    states=[state1, state2]
+    #print(states)
+    s2s=[]
+    singles=[]
+    repeats=30
+    for t in range(repeats):
+        s2=[]
+        single_state_error=[]
+        for j,state in enumerate(states):
+            qc=QuantumCircuit(2*dimension +1)
+            # on the first dimension qubits we first initialize zeros
+            qc.initialize(ground_state, range(dimension), normalize=True)
+            # on the second dimension qubits we initialize the state with the basis state we want to
+            qc.initialize(state, range(dimension, 2*dimension), normalize=True)
+            # now we will compute the fidelity between these two states
+            qc.initialize([1,0],2*dimension, normalize=True)
+            # this is the extra qubit storing the information about the overlap
+            qc.add_register(ClassicalRegister(1, 'c'))
+            qc.h(2*dimension)
+            # now we want to perform a controlled SWAP on the circuit from VQE and the basis state
+            for i in range(dimension):
+                qc.append(CSwapGate(), [2*dimension, i, dimension+i])
+            qc.h(2*dimension)
+            shots=1000
+            simulator = AerSimulator(method='statevector')   
+            qc.measure(2*dimension,0)
+            job = simulator.run(qc, shots=shots)  # Run 100 times
+            result = job.result()
+            counts = result.get_counts(qc)
+            num_zeros = counts.get('0', 0)
+            s2.append(np.abs(2*(num_zeros / shots)-1.0))
+            if j==1:
+                single_state_error.append(np.abs(2*(num_zeros / shots)-1.0))
+        # so now we have the intersection with both ground states
+        s2=np.array(s2)
+        s2=np.abs(np.sum(s2)-1.0)
+        s2s.append(s2)
+        single_state_error=np.array(single_state_error)
+        single_state_error=np.abs(single_state_error-1.0)
+        singles.append(single_state_error)
+    singles=np.array(singles)
+    s2s=np.array(s2s)
+    return s2s.mean(), s2s.std(), singles.mean(), singles.std()
+    # so now we extend not only to degenerate error, but to single state error
+def error_singles():
+    np.random.seed(37)
+    dimension=5
+    # we will fix the dimension to be 4 or 5 and track the performance of the error as we increase h
+    hs = np.linspace(-0.2,2.0,15)
+    errors=[]
+    stds=[]
+    errors1=[]
+    stds1=[]
+    for h in hs:
+        ground_state, cost_history_dict = vqe.variational_quantum_eigensolver(dimension, h=h)
+        error, std, error1, std1=error_withoutsecondstate(ground_state, dimension)
+        errors.append(error)
+        stds.append(std)
+        errors1.append(error1)
+        stds1.append(std1)
+    plt.figure(figsize=(10, 6))
+    plt.plot(hs, errors, label=f"Average error with SWAP over both spin up and spin down")
+    plt.fill_between(hs, np.array(errors) - np.array(stds), np.array(errors) + np.array(stds), alpha=0.2, label=f"Error Variance with SWAP over both spin up and spin down")
+    plt.plot(hs, errors1, label=f"Average error with SWAP over only spin up")
+    plt.fill_between(hs, np.array(errors1) - np.array(stds1), np.array(errors1) + np.array(stds1), alpha=0.2, label=f"Error Variance with SWAP over only spin up")
+    plt.xlabel("Magnetic field strength (h)")
+    plt.ylabel("Average Error")
+    plt.title(f"SWAP Test Error vs Magnetic field strength for the quantum Ising model: Alternative ansatz, {dimension} qubits")
+    plt.legend()
+    plt.savefig(f"swap_test_error_ising_singles_{dimension}_alternative.png")
+    plt.show()
+def error():
     np.random.seed(37)
     dimensions=[2,3,4,5]
     # we will also vary the magnetic field h
@@ -95,4 +168,5 @@ if __name__ == "__main__":
     plt.legend()
     plt.savefig("swap_test_error_ising.png")
     plt.show()
-
+if __name__ == "__main__":
+    error_singles()
