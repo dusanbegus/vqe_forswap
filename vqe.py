@@ -111,7 +111,7 @@ def variational_quantum_eigensolver(dimension, h=0):
             x0,
             args=(ansatz_isa, hamiltonian_isa, estimator),
             method="cobyla",
-            options={"maxiter": 200},
+            options={"maxiter": 100},
         )
 
     final_params = res.x
