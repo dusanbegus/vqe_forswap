@@ -116,7 +116,7 @@ def error_withoutsecondstate(ground_state, dimension):
         single_state_error=np.abs(single_state_error-1.0)
         singles.append(single_state_error)
         excitation=np.array(excitation)
-        excitation=np.abs(excitation-1.0)
+        excitation=np.abs(np.sum(excitation)-1.0)
         excitations.append(excitation)
     singles=np.array(singles)
     s2s=np.array(s2s)
@@ -132,21 +132,27 @@ def error_singles():
     stds=[]
     errors1=[]
     stds1=[]
+    exc=[]
+    excstds=[]
     for h in hs:
         ground_state, cost_history_dict = vqe.variational_quantum_eigensolver(dimension, h=h)
-        error, std, error1, std1=error_withoutsecondstate(ground_state, dimension)
+        error, std, error1, std1, excitation, excstd = error_withoutsecondstate(ground_state, dimension)
         errors.append(error)
         stds.append(std)
         errors1.append(error1)
         stds1.append(std1)
+        exc.append(excitation)
+        excstds.append(excstd)
     plt.figure(figsize=(10, 6))
     plt.plot(hs, errors, label=f"Average error with SWAP over both spin up and spin down")
-    plt.fill_between(hs, np.array(errors) - np.array(stds), np.array(errors) + np.array(stds), alpha=0.2, label=f"Error Variance with SWAP over both spin up and spin down")
+    plt.fill_between(hs, np.array(errors) - np.array(stds), np.array(errors) + np.array(stds), alpha=0.2, label=f"Error Standard Deviation with SWAP over both spin up and spin down")
     plt.plot(hs, errors1, label=f"Average error with SWAP over only spin up")
-    plt.fill_between(hs, np.array(errors1) - np.array(stds1), np.array(errors1) + np.array(stds1), alpha=0.2, label=f"Error Variance with SWAP over only spin up")
+    plt.fill_between(hs, np.array(errors1) - np.array(stds1), np.array(errors1) + np.array(stds1), alpha=0.2, label=f"Error Standard Deviation with SWAP over only spin up")
+    plt.plot(hs, exc, label=f"Average error with SWAP over all single excitations and ground state")
+    plt.fill_between(hs, np.array(exc) - np.array(excstds), np.array(exc) + np.array(excstds), alpha=0.2, label=f"Error Standard Deviation with SWAP over all single excitations and ground state")
     plt.xlabel("Magnetic field strength (h)")
     plt.ylabel("Average Error")
-    plt.title(f"SWAP Test Error vs Magnetic field strength for the quantum Ising model: Alternative ansatz, {dimension} qubits")
+    plt.title(f"SWAP Test Error vs Magnetic field strength for the quantum Ising model: Alternative Ansatz, {dimension} qubits")
     plt.legend()
     plt.savefig(f"swap_test_error_ising_singles_{dimension}_alternative.png")
     plt.show()

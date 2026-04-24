@@ -38,9 +38,8 @@ def variational_quantum_eigensolver(dimension, h=0):
     # Pre-defined ansatz circuit and operator class for Hamiltonian
     
     # Note that it is more common to place initial 'h' gates outside the ansatz. Here we specifically wanted this layer structure.
-    #ansatz = efficient_su2(hamiltonian.num_qubits)
-    #ansatz = efficient_su2(hamiltonian.num_qubits, su2_gates=["h", "rz", "y"], entanglement="circular", reps=1)
-    ansatz = efficient_su2(hamiltonian.num_qubits, su2_gates=["h", "rz", "ry","y"], reps=1)
+    #ansatz = efficient_su2(hamiltonian.num_qubits) # su(2) efficient
+    ansatz = efficient_su2(hamiltonian.num_qubits, su2_gates=["h", "rz", "ry","y"], reps=1) # alterative ansatz
     # we want to save the layout of the ansatz as a png
     #ansatz.draw("mpl", style="iqp").savefig(f"ansatz_layout_{dimension}_alternate_2.png")
     num_params = ansatz.num_parameters
