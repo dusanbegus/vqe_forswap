@@ -68,13 +68,19 @@ def error_withoutsecondstate(ground_state, dimension):
     state1 = basis[0]
     state2 = basis[2**dimension-1]
     states=[state1, state2]
-    #print(states)
+    # we now add the excitations defined by spin flips on the ground state
+    for i in range(dimension):
+        index=2**i
+        states.append(basis[index])
     s2s=[]
     singles=[]
+    excitations=[]
+    # we will also account for doing the SWAP test on all the excited states
     repeats=30
     for t in range(repeats):
         s2=[]
         single_state_error=[]
+        excitation=[]
         for j,state in enumerate(states):
             qc=QuantumCircuit(2*dimension +1)
             # on the first dimension qubits we first initialize zeros
@@ -97,9 +103,11 @@ def error_withoutsecondstate(ground_state, dimension):
             result = job.result()
             counts = result.get_counts(qc)
             num_zeros = counts.get('0', 0)
-            s2.append(np.abs(2*(num_zeros / shots)-1.0))
+            if (j==1 or j==0): 
+                s2.append(np.abs(2*(num_zeros / shots)-1.0))
             if j==1:
                 single_state_error.append(np.abs(2*(num_zeros / shots)-1.0))
+            excitation.append(np.abs(2*(num_zeros / shots)-1.0))
         # so now we have the intersection with both ground states
         s2=np.array(s2)
         s2=np.abs(np.sum(s2)-1.0)
@@ -107,9 +115,13 @@ def error_withoutsecondstate(ground_state, dimension):
         single_state_error=np.array(single_state_error)
         single_state_error=np.abs(single_state_error-1.0)
         singles.append(single_state_error)
+        excitation=np.array(excitation)
+        excitation=np.abs(excitation-1.0)
+        excitations.append(excitation)
     singles=np.array(singles)
     s2s=np.array(s2s)
-    return s2s.mean(), s2s.std(), singles.mean(), singles.std()
+    excitations=np.array(excitations)
+    return s2s.mean(), s2s.std(), singles.mean(), singles.std(), excitations.mean(), excitations.std()
     # so now we extend not only to degenerate error, but to single state error
 def error_singles():
     np.random.seed(37)
@@ -164,9 +176,9 @@ def error():
         plt.fill_between(Ns, np.array(errors[i]) - np.array(stds[i]), np.array(errors[i]) + np.array(stds[i]), alpha=0.2, label=f"Error Variance with h={h}")
     plt.xlabel("Hilbert space size (N)")
     plt.ylabel("Average Error")
-    plt.title("SWAP Test Error vs Hilbert Space size for the Ising Model: Initial SU(2) efficient ansatz")
+    plt.title("SWAP Test Error vs Hilbert Space size for the Ising Model: Alternative ansatz")
     plt.legend()
-    plt.savefig("swap_test_error_ising.png")
+    plt.savefig("swap_test_error_ising_2.png")
     plt.show()
 if __name__ == "__main__":
-    error_singles()
+    error()

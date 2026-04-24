@@ -81,17 +81,35 @@ def varying_shots():
             b=basiss(dimension)
             target=create_rand(2**dimension)
             c_values, s2_values=initialize_circuit(target, b, dimension, shotss=shot)
-            err.append(np.sum(s2_values)-1.0)
+            err.append(np.abs(np.sum(s2_values)-1.0))
         errors.append(np.mean(err))
         stds.append(np.std(err))
-    
-    plt.plot(shots, errors, label="Error")
-    plt.fill_between(shots, np.array(errors) - np.array(stds), np.array(errors) + np.array(stds), alpha=0.2, label="Error standard deviation")
-    plt.xlabel("Number of shots")
-    plt.ylabel("Error")
-    plt.title("SWAP test error vs Number of shots through the circuit: 4 qubits")
-    plt.legend()
-    plt.savefig("swap_test_error_shots.png")
+    # we will also add the logarithmic plot inside the main plot
+    log_errors=[np.log(e) for e in errors]
+    log_shots=[np.log(s) for s in shots]
+    fig, ax1 = plt.subplots(figsize=(10, 6))
+    ax1.plot(shots, errors, label="Error", color='tab:blue')
+    ax1.fill_between(shots, np.array(errors) - np.array(stds), 
+                    np.array(errors) + np.array(stds), alpha=0.2, 
+                    label="Error standard deviation", color='tab:blue')
+
+    ax1.set_xlabel("Number of shots")
+    ax1.set_ylabel("Error")
+    ax1.set_title("SWAP test error vs Number of shots: 4 qubits")
+    ax1.legend(loc='lower left') 
+    # copilot suggested this
+    inset_ax = fig.add_axes([0.55, 0.55, 0.3, 0.3]) 
+
+    # Plot Log Data on the inset
+    # Note: You asked for Log B vs A (Log Error vs Shots)
+    inset_ax.plot(log_shots, log_errors, color='tab:red')
+    inset_ax.set_title("Log Error Plot", fontsize=10)
+    inset_ax.set_xlabel("Log(Shots)", fontsize=8)
+    inset_ax.set_ylabel("Log(Error)", fontsize=8)
+    inset_ax.tick_params(labelsize=8) # Make tick numbers smaller
+
+    # 3. Save and Show
+    plt.savefig("swap_test_error_shots.png", dpi=300)
     plt.show()
 def the_test():
     dimensions=[2,3,4,5]
@@ -104,20 +122,20 @@ def the_test():
             b=basiss(dimension)
             target=create_rand(2**dimension)
             c_values, s2_values=initialize_circuit(target, b, dimension)
-            errors.append(np.sum(s2_values)-1.0) 
+            errors.append(np.abs(np.sum(s2_values)-1.0) )
         err.append(np.mean(errors))
         var.append(np.var(errors))      
     # now we plot the errors against the dimension of the Hilbert space, along with variances                            
     Ns=[2**d for d in dimensions]
     plt.plot(Ns, err, label="Average Error")
-    plt.fill_between(Ns, np.array(err) - np.array(var), np.array(err) + np.array(var), alpha=0.2, label="Error Variance")
+    plt.fill_between(Ns, np.array(err) - np.array(var), np.array(err) + np.array(var), alpha=0.2, label="Error Standard Deviation")
     plt.xlabel("Hilbert space size (N)")
     plt.ylabel("Average Error")
-    plt.title("SWAP Test Error vs Hilbert Space size")
+    plt.title("SWAP Test Error vs Number of Ground States")
     plt.legend()
     plt.savefig("swap_test_error.png")
     plt.show()
 
 
 if __name__ == "__main__":
-    varying_shots()
+    the_test()
